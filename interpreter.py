@@ -60,17 +60,18 @@ def execute(program: list[str], tape: list[int], initial_pointer: int):
                 if tape[pointer] == 0:
                     index = jumping[index] + 1
             case ",":
-                tape[pointer] = ord(input())
+                tape[pointer] = ord(sys.stdin.read(1))
         index += 1
 
 
 TAPE_LENGTH = 3000
 
-program: list[str] = [
-    char
-    for char in sys.stdin.read()
-    if char in (".", ">", "<", "+", "-", "[", "]", ",")
-]
+with open(sys.argv[1], "r") as program_file:
+    program: list[str] = [
+        char
+        for char in program_file.read()
+        if char in {".", ">", "<", "+", "-", "[", "]", ","}
+    ]
 tape: list[int] = [0 for _ in range(TAPE_LENGTH)]
 pointer: int = 0
 execute(program, tape, pointer)
