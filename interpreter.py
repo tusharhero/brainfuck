@@ -41,11 +41,9 @@ def execute(program: list[str], tape: list[int], initial_pointer: int):
     reverse_jumping = {v: k for k, v in jumping.items()}
     index = 0
     while index < len(program):
-        # print(index, tape)
+        # print(index, tape[:10])
         instruction = program[index]
         pointer %= TAPE_LENGTH
-        if pointer == len(tape):
-            pointer = 0
         match instruction:
             case ".":
                 print(chr(tape[pointer]), end="")
@@ -65,7 +63,7 @@ def execute(program: list[str], tape: list[int], initial_pointer: int):
                     index = jumping[index] + 1
             case ",":
                 tape[pointer] = ord(sys.stdin.read(1))
-            case "?":
+            case "#":
                 print(tape[: max(5, pointer)])
         index += 1
 
@@ -76,7 +74,7 @@ with open(sys.argv[1], "r") as program_file:
     program: list[str] = [
         char
         for char in program_file.read()
-        if char in {".", ">", "<", "+", "-", "[", "]", ",", "?"}
+        if char in {".", ">", "<", "+", "-", "[", "]", ",", "#"}
     ]
 tape: list[int] = [0 for _ in range(TAPE_LENGTH)]
 pointer: int = 0
