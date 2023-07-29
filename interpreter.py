@@ -21,51 +21,64 @@ A simple brainfuck interpreter
 import sys
 
 
-def get_jumps(program: list[str]):
-    pairs = []
-    stack = []
-    for index, instruction in enumerate(program):
-        if instruction == "[":
-            stack.append(index)
-        elif instruction == "]":
-            assert stack
-            start_loop_index = stack.pop()
-            end_loop_index = index
-            pairs.append((start_loop_index, end_loop_index))
-    return dict(pairs)
+class BrainFuckMachine:
+    def __init__(self, tape_length: int, program: list[str]):
+        self.tape: list[int] = [0 for _ in range(tape_length)]
+        self.program: list[str] = program
+        self.pointer = 0
+        self.jumps = self.get_jumps()
+        self.reverse_jumps = {v: k for k, v in self.jumps.items()}
 
+    def get_jumps(self):
+        pairs = []
+        stack = []
+        for index, instruction in enumerate(self.program):
+            if instruction == "[":
+                stack.append(index)
+            elif instruction == "]":
+                assert stack
+                start_loop_index = stack.pop()
+                end_loop_index = index
+                pairs.append((start_loop_index, end_loop_index))
+        return dict(pairs)
 
-def execute(program: list[str], tape: list[int], initial_pointer: int):
-    pointer = initial_pointer
-    jumping: dict[int, int] = get_jumps(program)
-    reverse_jumping = {v: k for k, v in jumping.items()}
-    index = 0
-    while index < len(program):
-        # print(index, tape[:10])
-        instruction = program[index]
-        pointer %= TAPE_LENGTH
-        match instruction:
-            case ".":
-                print(chr(tape[pointer]), end="")
-            case ">":
-                pointer += 1
-            case "<":
-                pointer -= 1
-            case "+":
-                tape[pointer] += 1
-            case "-":
-                tape[pointer] -= 1
-            case "]":
-                if tape[pointer] != 0:
-                    index = reverse_jumping[index]
-            case "[":
-                if tape[pointer] == 0:
-                    index = jumping[index] + 1
-            case ",":
-                tape[pointer] = ord(sys.stdin.read(1))
-            case "#":
-                print(tape[: max(5, pointer)])
-        index += 1
+    def execute(self):
+        index = 0
+        while index < len(self.program):
+            instruction = self.program[index]
+            self.pointer %= TAPE_LENGTH
+            match instruction:
+                case ".":
+                    print(chr(self.tape[self.pointer]), end="")
+                case ">":
+                    self.pointer += 1
+                case "<":
+                    self.pointer -= 1
+                case "+":
+                    self.tape[self.pointer] += 1
+                case "-":
+                    self.tape[self.pointer] -= 1
+                case "]":
+                    if self.tape[self.pointer] != 0:
+                        self.index = self.reverse_jumps[index]
+                case "[":
+                    if self.tape[self.pointer] == 0:
+                        index = self.jumps[index] + 1
+                case ",":
+                    self.tape[self.pointer] = ord(sys.stdin.read(1))
+                case "#":
+                    self.debug(max(5, self.pointer))
+            index += 1
+
+    def debug(self, slice: int):
+        print(f"\n\nDEBUG INFO: pointer at {self.pointer}")
+        print("\n|", end="")
+        sliced_tape = self.tape[:slice]
+        for cell in sliced_tape:
+            print(f"{cell}", end="|")
+        print("\n", end=" ")
+        for current_pointer, cell in enumerate(sliced_tape):
+            print(f"{'^'if current_pointer == self.pointer else ' '}", end=" ")
 
 
 TAPE_LENGTH = 30000
@@ -76,6 +89,5 @@ with open(sys.argv[1], "r") as program_file:
         for char in program_file.read()
         if char in {".", ">", "<", "+", "-", "[", "]", ",", "#"}
     ]
-tape: list[int] = [0 for _ in range(TAPE_LENGTH)]
-pointer: int = 0
-execute(program, tape, pointer)
+machine = BrainFuckMachine(TAPE_LENGTH, program)
+machine.execute()
